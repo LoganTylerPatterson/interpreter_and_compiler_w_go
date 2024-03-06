@@ -29,14 +29,6 @@ func (l *Lexer) readChar() {
 	l.readPosition += 1
 }
 
-func (l *Lexer) peekChar() byte {
-	if l.readPosition >= len(l.input) {
-		return 0
-	} else {
-		return l.input[l.readPosition]
-	}
-}
-
 func (l *Lexer) GetToken() token.Token {
 	var tok token.Token
 
@@ -97,6 +89,14 @@ func (l *Lexer) GetToken() token.Token {
 	}
 	l.readChar()
 	return tok
+}
+
+func (l *Lexer) peekChar() byte {
+	if l.readPosition >= len(l.input) {
+		return 0
+	} else {
+		return l.input[l.readPosition]
+	}
 }
 
 func (l *Lexer) eatWhitespace() {
