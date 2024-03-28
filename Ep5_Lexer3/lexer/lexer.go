@@ -91,6 +91,10 @@ func (l *Lexer) GetToken() token.Token {
 			tok.Lexeme = l.readId()
 			tok.Type = token.DetermineTokenType(tok.Lexeme)
 			return tok
+		} else if isDigit(l.ch) {
+			tok.Lexeme = l.readNumber()
+			tok.Type = token.DIGIT
+			return tok
 		} else {
 			tok = createToken(token.ILLEGAL, l.ch)
 		}
@@ -100,15 +104,27 @@ func (l *Lexer) GetToken() token.Token {
 }
 
 func (l *Lexer) readId() string {
-	position := l.position
+	pos := l.position
 	for isLetter(l.ch) {
 		l.readChar()
 	}
-	return l.input[position:l.position]
+	return l.input[pos:l.position]
+}
+
+func (l *Lexer) readNumber() string {
+	pos := l.position
+	for isDigit(l.ch) {
+		l.readChar()
+	}
+	return l.input[pos:l.position]
 }
 
 func isLetter(ch byte) bool {
 	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_'
+}
+
+func isDigit(ch byte) bool {
+	return '0' <= ch && ch <= '9'
 }
 
 func (l *Lexer) eatWhitespace() {
