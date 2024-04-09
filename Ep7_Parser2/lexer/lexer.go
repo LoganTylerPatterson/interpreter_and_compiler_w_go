@@ -29,6 +29,14 @@ func (l *Lexer) readChar() {
 	l.readPosition += 1
 }
 
+func (l *Lexer) peekChar() byte {
+	if l.readPosition >= len(l.input) {
+		return 0
+	} else {
+		return l.input[l.readPosition]
+	}
+}
+
 func (l *Lexer) GetToken() token.Token {
 	var tok token.Token
 
@@ -55,7 +63,7 @@ func (l *Lexer) GetToken() token.Token {
 		if l.peekChar() == '=' {
 			ch := l.ch
 			l.readChar()
-			tok = token.Token{Type: token.EQ, Lexeme: string(ch) + string(l.ch)}
+			tok = token.Token{Type: token.NEQ, Lexeme: string(ch) + string(l.ch)}
 		} else {
 			tok = createToken(token.EXCLAM, l.ch)
 		}
@@ -83,6 +91,10 @@ func (l *Lexer) GetToken() token.Token {
 			tok.Lexeme = l.readId()
 			tok.Type = token.DetermineTokenType(tok.Lexeme)
 			return tok
+		} else if isDigit(l.ch) {
+			tok.Lexeme = l.readNumber()
+			tok.Type = token.DIGIT
+			return tok
 		} else {
 			tok = createToken(token.ILLEGAL, l.ch)
 		}
@@ -91,30 +103,34 @@ func (l *Lexer) GetToken() token.Token {
 	return tok
 }
 
-func (l *Lexer) peekChar() byte {
-	if l.readPosition >= len(l.input) {
-		return 0
-	} else {
-		return l.input[l.readPosition]
+func (l *Lexer) readId() string {
+	pos := l.position
+	for isLetter(l.ch) {
+		l.readChar()
 	}
+	return l.input[pos:l.position]
+}
+
+func (l *Lexer) readNumber() string {
+	pos := l.position
+	for isDigit(l.ch) {
+		l.readChar()
+	}
+	return l.input[pos:l.position]
+}
+
+func isLetter(ch byte) bool {
+	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_'
+}
+
+func isDigit(ch byte) bool {
+	return '0' <= ch && ch <= '9'
 }
 
 func (l *Lexer) eatWhitespace() {
 	for l.ch == ' ' || l.ch == '\t' || l.ch == '\n' || l.ch == '\r' {
 		l.readChar()
 	}
-}
-
-func (l *Lexer) readId() string {
-	position := l.position
-	for isLetter(l.ch) {
-		l.readChar()
-	}
-	return l.input[position:l.position]
-}
-
-func isLetter(ch byte) bool {
-	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_'
 }
 
 func createToken(tokenType token.TokenType, ch byte) token.Token {
