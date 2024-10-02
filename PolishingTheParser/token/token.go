@@ -28,6 +28,8 @@ const (
 	RPAREN    = ")"
 	LBRACE    = "{"
 	RBRACE    = "}"
+	LBRACK    = "["
+	RBRACK    = "]"
 	FUNC      = "FUNC"
 	LET       = "LET"
 	IF        = "IF"

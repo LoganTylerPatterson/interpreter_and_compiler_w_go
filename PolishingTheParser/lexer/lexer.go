@@ -83,6 +83,10 @@ func (l *Lexer) GetToken() token.Token {
 		tok = createToken(token.SEMICOLON, l.ch)
 	case ',':
 		tok = createToken(token.COMMA, l.ch)
+	case '[':
+		tok = createToken(token.LBRACK, l.ch)
+	case ']':
+		tok = createToken(token.RBRACK, l.ch)
 	case '"':
 		tok.Type = token.STRING
 		tok.Lexeme = l.readString()

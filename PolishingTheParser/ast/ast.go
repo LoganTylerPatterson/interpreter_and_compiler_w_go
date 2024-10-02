@@ -43,6 +43,46 @@ func (p *Program) String() string {
 	return out.String()
 }
 
+type ArrayLiteral struct {
+	Token token.Token
+	Items []Expression
+}
+
+func (a *ArrayLiteral) TokenLexeme() string { return a.Token.Lexeme }
+func (a *ArrayLiteral) expressionNode()     {}
+func (a *ArrayLiteral) String() string {
+	var out bytes.Buffer
+
+	items := []string{}
+	for _, item := range a.Items {
+		items = append(items, item.String())
+	}
+
+	out.WriteString("[")
+	out.WriteString(strings.Join(items, ", "))
+	out.WriteString("]")
+
+	return out.String()
+}
+
+type IndexExpression struct {
+	Token token.Token
+	Left  Expression
+	Index Expression
+}
+
+func (ie *IndexExpression) expressionNode()     {}
+func (ie *IndexExpression) TokenLexeme() string { return ie.Token.Lexeme }
+func (ie *IndexExpression) String() string {
+	var out bytes.Buffer
+	out.WriteString("(")
+	out.WriteString(ie.Left.String())
+	out.WriteString("[")
+	out.WriteString(ie.Index.String())
+	out.WriteString("])")
+	return out.String()
+}
+
 // LET STATEMENTS //
 type LetStatement struct {
 	Token token.Token

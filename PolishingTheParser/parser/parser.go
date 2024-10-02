@@ -17,6 +17,7 @@ const (
 	MULT          // *
 	PREFIX        // !<condition>
 	CALL          //function call
+	INDEX
 )
 
 var precedences = map[token.TokenType]int{
@@ -29,6 +30,7 @@ var precedences = map[token.TokenType]int{
 	token.DIV:    MULT,
 	token.MULT:   MULT,
 	token.LPAREN: CALL,
+	token.LBRACK: INDEX,
 }
 
 type (
@@ -71,7 +73,7 @@ func New(lexer *lexer.Lexer) *Parser {
 	parser.addPrefixToken(token.FALSE, parser.parseBoolean)
 	parser.addPrefixToken(token.IF, parser.parseIfExpression)
 	parser.addPrefixToken(token.FUNC, parser.parseFunctionLiteral)
-	parser.addPrefixToken(token.STRING, parser.parseStringLiteral)
+	parser.addPrefixToken(token.LBRACK, parser.parseArrayLiteral)
 
 	parser.infixParseFuncs = make(map[token.TokenType]infixParse)
 	parser.addInfixToken(token.PLUS, parser.parseInfixExpression)
@@ -83,6 +85,7 @@ func New(lexer *lexer.Lexer) *Parser {
 	parser.addInfixToken(token.LT, parser.parseInfixExpression)
 	parser.addInfixToken(token.GT, parser.parseInfixExpression)
 	parser.addInfixToken(token.LPAREN, parser.parseCallExpression)
+	parser.addInfixToken(token.LBRACK, parser.parseIndexExpression)
 
 	//set our current token and peek token
 	parser.getToken()
@@ -118,38 +121,56 @@ func (parser *Parser) nextTokenIs(tokenType token.TokenType) bool {
 	return parser.nextToken.Type == tokenType
 }
 
-func (parser *Parser) parseCallExpression(function ast.Expression) ast.Expression {
-	exp := &ast.CallExpression{Token: parser.currentToken, Function: function}
-	exp.Arguments = parser.parseCallArguments()
+func (parser *Parser) parseArrayLiteral() ast.Expression {
+	array := &ast.ArrayLiteral{Token: parser.currentToken}
+
+	array.Items = parser.parseExpressionList(token.RBRACK)
+
+	return array
+}
+
+func (parser *Parser) parseIndexExpression(left ast.Expression) ast.Expression {
+	exp := &ast.IndexExpression{Token: parser.currentToken, Left: left}
+
+	parser.getToken()
+
+	exp.Index = parser.parseExpression(NONE)
+
+	if !parser.expect(token.RBRACK) {
+		return nil
+	}
+
 	return exp
 }
 
-func (parser *Parser) parseStringLiteral() ast.Expression {
-	return &ast.StringLiteral{Token: parser.currentToken, Value: parser.currentToken.Lexeme}
-}
+func (parser *Parser) parseExpressionList(endToken token.TokenType) []ast.Expression {
+	list := []ast.Expression{}
 
-func (parser *Parser) parseCallArguments() []ast.Expression {
-	args := []ast.Expression{}
-
-	if parser.nextTokenIs(token.RPAREN) {
+	if parser.nextTokenIs(endToken) {
 		parser.getToken()
-		return args
+		return list
 	}
 
 	parser.getToken()
-	args = append(args, parser.parseExpression(NONE))
+	list = append(list, parser.parseExpression(NONE))
 
 	for parser.nextTokenIs(token.COMMA) {
 		parser.getToken()
 		parser.getToken()
-		args = append(args, parser.parseExpression(NONE))
+		list = append(list, parser.parseExpression(NONE))
 	}
 
-	if !parser.expect(token.RPAREN) {
+	if !parser.expect(endToken) {
 		return nil
 	}
 
-	return args
+	return list
+}
+
+func (parser *Parser) parseCallExpression(function ast.Expression) ast.Expression {
+	exp := &ast.CallExpression{Token: parser.currentToken, Function: function}
+	exp.Arguments = parser.parseExpressionList(token.RPAREN)
+	return exp
 }
 
 func (parser *Parser) parseIfExpression() ast.Expression {
